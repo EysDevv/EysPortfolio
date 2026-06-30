@@ -1704,7 +1704,7 @@ async function loadFromSupabase() {
             case 'paymentTitle': paymentTitle = val; break;
             case 'status': status = val; break;
             case 'payment': payment = val; break;
-            case 'stats': stats = val; break;
+            case 'stats': if(Array.isArray(val) && val.length > 0) stats = val; break;  // Only update if not empty
             case 'favicon': favicon = val; break;
           }
         } catch(e) { console.error('Parse error:', e); }
@@ -1749,6 +1749,7 @@ async function loadFromSupabase() {
     if (contactData && contactData.length > 0) contact = contactData[0];
     
     console.log('✅ Data loaded from Supabase');
+    window._supabaseLoaded = true;
     renderSite();
     applyFavicon();
   } catch (e) {
@@ -2830,8 +2831,16 @@ sObs.observe(document.getElementById('skills'));
     card.style.boxShadow='8px 8px 0 rgba(0,0,0,.2),0 20px 50px rgba(0,0,0,.25)';
   });
 })();
-renderSite();
-applyFavicon();
+// Don't render until Supabase data loads
+// renderSite() and applyFavicon() are now called by loadFromSupabase()
+// Fallback: if Supabase takes >5 seconds, render with defaults
+setTimeout(()=>{
+  if(!window._supabaseLoaded) {
+    console.log('⏱️ Supabase taking too long, rendering with defaults');
+    renderSite();
+    applyFavicon();
+  }
+}, 5000);
 initSupabase();
 // Observe stats section for count-up animation
 setTimeout(()=>{
