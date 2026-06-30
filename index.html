@@ -26,12 +26,18 @@ body.ready #loading-overlay{
 .loading-content{
   text-align:center;
   display:flex;flex-direction:column;align-items:center;gap:28px;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:20px;
+  padding:60px 50px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2),inset 0 1px 1px rgba(255,255,255,0.3);
 }
 
 .loading-icon{
-  font-size:80px;
-  width:80px;
-  height:80px;
+  font-size:100px;
+  width:100px;
+  height:100px;
   position:relative;
   display:flex;
   align-items:center;
@@ -40,6 +46,8 @@ body.ready #loading-overlay{
 }
 
 .loading-icon img{
+  width:100px !important;
+  height:100px !important;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3));
   position:relative;
   z-index:2;
@@ -78,19 +86,21 @@ body.ready #loading-overlay{
   display:inline-block;
 }
 
-.dot{
+.loading-dot{
   display:inline-block;
   width:8px;
   height:8px;
   border-radius:50%;
-  background:#FFFFFF;
+  background:#FFFFFF !important;
   animation:jumpDot 1.4s infinite ease-in-out;
   box-shadow:0 2px 4px rgba(0,0,0,0.3);
   flex-shrink:0;
+  margin:0 !important;
+  padding:0 !important;
 }
-.dot:nth-child(3){animation-delay:0.15s}
-.dot:nth-child(4){animation-delay:0.3s}
-.dot:nth-child(5){animation-delay:0.45s}
+.loading-dot:nth-child(3){animation-delay:0.15s}
+.loading-dot:nth-child(4){animation-delay:0.3s}
+.loading-dot:nth-child(5){animation-delay:0.45s}
 
 @keyframes jumpDot{
   0%{
@@ -724,18 +734,18 @@ footer{text-align:center;padding:20px;color:rgba(255,255,255,.5);font-size:.85re
 <div id="loading-overlay">
   <div class="loading-content">
     <div class="loading-icon">
-      <img id="loading-favicon" src="" alt="Loading" style="width:80px;height:80px;border-radius:12px;">
-      <svg class="loading-fill" viewBox="0 0 80 80" width="80" height="80" style="position:absolute;top:0;left:0;">
+      <img id="loading-favicon" src="" alt="Loading" style="width:100px;height:100px;border-radius:12px;">
+      <svg class="loading-fill" viewBox="0 0 100 100" width="100" height="100" style="position:absolute;top:0;left:0;">
         <defs>
           <clipPath id="fillClip">
-            <rect x="0" y="80" width="80" height="80"/>
+            <rect x="0" y="100" width="100" height="100"/>
           </clipPath>
         </defs>
-        <rect x="0" y="0" width="80" height="80" fill="rgba(202,240,248,0.6)" clip-path="url(#fillClip)"/>
+        <rect x="0" y="0" width="100" height="100" fill="rgba(202,240,248,0.6)" clip-path="url(#fillClip)" rx="12"/>
       </svg>
     </div>
     <div class="loading-text">
-      <span>Loading</span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span>Loading</span><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
     </div>
   </div>
 </div>
@@ -1815,9 +1825,11 @@ async function loadFromSupabase() {
   try {
     console.log('🔄 Loading data from Supabase...');
     
-    // Load stats from dedicated stats table
+    // Load stats from dedicated stats table (optional - if table doesn't exist, continue anyway)
     const { data: statsData, error: statsError } = await supabaseClient.from('stats').select('*').order('order_idx', { ascending: true });
-    if (statsError) console.error('Stats load error:', statsError);
+    if (statsError) {
+      console.warn('⚠️ Stats table not found or error:', statsError.message);
+    }
     if (statsData && statsData.length > 0) {
       stats = statsData;
       console.log('📊 Stats loaded:', stats);
@@ -2991,17 +3003,11 @@ sObs.observe(document.getElementById('skills'));
   });
 })();
 // Load favicon into loading screen
+// Load favicon into loading screen - always use the favicon
 const loadingFavicon=document.getElementById('loading-favicon');
 const storedFavicon=load('favicon','');
 if(storedFavicon){
   loadingFavicon.src=storedFavicon;
-} else {
-  // Fallback to a default icon or emoji
-  loadingFavicon.style.display='none';
-  const fallback=document.createElement('div');
-  fallback.style.cssText='font-size:80px;display:flex;align-items:center;justify-content:center;';
-  fallback.textContent='🎮';
-  loadingFavicon.parentElement.insertBefore(fallback,loadingFavicon);
 }
 // ONLY render when Supabase finishes loading - no fallback render!
 // This prevents the flash of old data
