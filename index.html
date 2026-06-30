@@ -1329,6 +1329,14 @@ footer{text-align:center;padding:20px;color:rgba(255,255,255,.5);font-size:.85re
         <button class="ap-save-btn" onclick="changePassword()">Update Password</button>
         <span class="save-confirm" id="sc-pw">✓ Password updated!</span>
         <div class="ap-card" style="margin-top:24px">
+          <div class="ap-card-title">🎨 Browser Tab Icon (Favicon)</div>
+          <p style="color:var(--admin-muted);font-size:.88rem;font-weight:600;margin-bottom:14px">Upload a small image (32x32 or 64x64 px) to display as your browser tab icon</p>
+          <div class="fg"><label>Upload Icon Image</label><input type="file" id="f-favicon" accept="image/*" onchange="previewFavicon(this)"></div>
+          <div id="favicon-preview" style="margin-top:12px;"></div>
+          <button class="ap-save-btn" onclick="saveFavicon()" style="margin-top:12px">Save Favicon</button>
+          <span class="save-confirm" id="sc-favicon">✓ Favicon updated!</span>
+        </div>
+        <div class="ap-card" style="margin-top:24px">
           <div class="ap-card-title">Reset All Data</div>
           <p style="color:var(--admin-muted);font-size:.88rem;font-weight:600;margin-bottom:14px">This will reset ALL site content back to defaults. Cannot be undone.</p>
           <button class="ap-logout" onclick="resetAll()" style="font-family:'Nunito',sans-serif">⚠️ Reset Everything</button>
@@ -1682,7 +1690,7 @@ async function initSupabase() {
 async function saveToSupabase(key, val) {
   if (!supabaseClient) return;
   try {
-    const configKeys = ['password','projectsTitle','skillsTitle','paymentTitle','status','payment','stats'];
+    const configKeys = ['password','projectsTitle','skillsTitle','paymentTitle','status','payment','stats','favicon'];
     if (configKeys.includes(key)) {
       await supabaseClient.from('config').upsert({key,value:JSON.stringify(val)},{onConflict:'key'});
       console.log(`✅ ${key} saved`);
@@ -1773,6 +1781,7 @@ let status=load('status',DEFAULTS.status);
 let stats=load('stats',DEFAULTS.stats);
 let paymentTitle=load('paymentTitle',DEFAULTS.paymentTitle);
 let payment=load('payment',DEFAULTS.payment);
+let favicon=load('favicon','');
 let isLoggedIn=false;
 let editProjIdx=-1;
 
@@ -2340,6 +2349,15 @@ function populateAdminForms(){
 // ═══════════════════════════════════════════
 function flash(id){const el=document.getElementById(id);el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
 
+function applyFavicon(){
+  if(favicon){
+    const link=document.querySelector("link[rel='icon']")||document.createElement('link');
+    link.rel='icon';
+    link.href=favicon;
+    if(!document.querySelector("link[rel='icon']"))document.head.appendChild(link);
+  }
+}
+
 function saveHero(){
   hero={year:v('f-heroYear'),tag1:v('f-heroTag1'),tag2:v('f-heroTag2'),sub:v('f-heroSub'),cta:v('f-heroCta')};
   status=currentStatus;
@@ -2664,6 +2682,30 @@ function showTab(name,btn){
 // ═══════════════════════════════════════════
 // PASSWORD CHANGE
 // ═══════════════════════════════════════════
+function previewFavicon(input){
+  const preview=document.getElementById('favicon-preview');
+  if(input.files&&input.files[0]){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      preview.innerHTML=`<img src="${e.target.result}" style="width:64px;height:64px;border:2px solid var(--orange);border-radius:8px;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function saveFavicon(){
+  const input=document.getElementById('f-favicon');
+  if(!input.files||!input.files[0]){alert('Please select an image first');return}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    favicon=e.target.result;
+    persist('favicon',favicon);
+    applyFavicon();
+    flash('sc-favicon');
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
 function changePassword(){
   const cur=document.getElementById('s-curPw').value;
   const nw=document.getElementById('s-newPw').value;
@@ -2713,6 +2755,7 @@ sObs.observe(document.getElementById('skills'));
   });
 })();
 renderSite();
+applyFavicon();
 initSupabase();
 // Observe stats section for count-up animation
 setTimeout(()=>{
