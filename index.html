@@ -1679,12 +1679,68 @@ async function initSupabase() {
           'sb_publishable_pxXp_0TjYXai85jgZ1yZ6Q_0lh1ISIM'
         );
         console.log('✅ Supabase ready');
+        await loadFromSupabase();
       } catch (e) {
         console.error('Supabase init failed:', e);
       }
     }
     if (attempts > 50) clearInterval(checkLib);
   }, 100);
+}
+
+async function loadFromSupabase() {
+  if (!supabaseClient) return;
+  try {
+    // Load config keys
+    const { data: configData } = await supabaseClient.from('config').select('key,value');
+    if (configData) {
+      configData.forEach(row => {
+        try {
+          const val = JSON.parse(row.value);
+          switch(row.key) {
+            case 'password': pw = val; break;
+            case 'projectsTitle': projectsTitle = val; break;
+            case 'skillsTitle': skillsTitle = val; break;
+            case 'paymentTitle': paymentTitle = val; break;
+            case 'status': status = val; break;
+            case 'payment': payment = val; break;
+            case 'stats': stats = val; break;
+            case 'favicon': favicon = val; break;
+          }
+        } catch(e) { console.error('Parse error:', e); }
+      });
+    }
+    
+    // Load projects
+    const { data: projectsData } = await supabaseClient.from('projects').select('*');
+    if (projectsData && projectsData.length > 0) projects = projectsData;
+    
+    // Load skills
+    const { data: skillsData } = await supabaseClient.from('skills').select('*');
+    if (skillsData && skillsData.length > 0) skills = skillsData;
+    
+    // Load links
+    const { data: linksData } = await supabaseClient.from('links').select('*');
+    if (linksData && linksData.length > 0) links = linksData;
+    
+    // Load hero
+    const { data: heroData } = await supabaseClient.from('hero').select('*');
+    if (heroData && heroData.length > 0) hero = heroData[0];
+    
+    // Load about
+    const { data: aboutData } = await supabaseClient.from('about').select('*');
+    if (aboutData && aboutData.length > 0) about = aboutData[0].data || aboutData[0];
+    
+    // Load contact
+    const { data: contactData } = await supabaseClient.from('contact').select('*');
+    if (contactData && contactData.length > 0) contact = contactData[0];
+    
+    console.log('✅ Data loaded from Supabase');
+    renderSite();
+    applyFavicon();
+  } catch (e) {
+    console.error('Load from Supabase failed:', e);
+  }
 }
 
 async function saveToSupabase(key, val) {
