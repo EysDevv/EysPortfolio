@@ -1698,6 +1698,18 @@ async function saveToSupabase(key, val) {
       await supabaseClient.from('links').delete().gte('id',0);
       if (val.length > 0) await supabaseClient.from('links').insert(val);
       console.log(`✅ ${val.length} links saved`);
+    } else if (key === 'hero' && typeof val === 'object') {
+      await supabaseClient.from('hero').delete().gte('id',0);
+      if (val && Object.keys(val).length > 0) await supabaseClient.from('hero').insert([val]);
+      console.log(`✅ hero saved`);
+    } else if (key === 'about' && typeof val === 'object') {
+      await supabaseClient.from('about').delete().gte('id',0);
+      if (val && Object.keys(val).length > 0) await supabaseClient.from('about').insert([val]);
+      console.log(`✅ about saved`);
+    } else if (key === 'contact' && typeof val === 'object') {
+      await supabaseClient.from('contact').delete().gte('id',0);
+      if (val && Object.keys(val).length > 0) await supabaseClient.from('contact').insert([val]);
+      console.log(`✅ contact saved`);
     }
   } catch (e) {
     console.error('Save error:', e);
