@@ -1689,11 +1689,18 @@ async function initSupabase() {
 }
 
 async function loadFromSupabase() {
-  if (!supabaseClient) return;
+  if (!supabaseClient) {
+    console.log('❌ Supabase client not initialized');
+    return;
+  }
   try {
+    console.log('🔄 Loading data from Supabase...');
+    
     // Load config keys
-    const { data: configData } = await supabaseClient.from('config').select('key,value');
+    const { data: configData, error: configError } = await supabaseClient.from('config').select('*');
+    if (configError) console.error('Config load error:', configError);
     if (configData) {
+      console.log('📦 Config data:', configData);
       configData.forEach(row => {
         try {
           const val = JSON.parse(row.value);
@@ -1704,56 +1711,80 @@ async function loadFromSupabase() {
             case 'paymentTitle': paymentTitle = val; break;
             case 'status': status = val; break;
             case 'payment': payment = val; break;
-            case 'stats': if(Array.isArray(val) && val.length > 0) stats = val; break;  // Only update if not empty
+            case 'stats': 
+              if(Array.isArray(val) && val.length > 0) {
+                stats = val;
+                console.log('📊 Stats loaded:', stats);
+              }
+              break;
             case 'favicon': favicon = val; break;
           }
-        } catch(e) { console.error('Parse error:', e); }
+        } catch(e) { console.error('Parse error for', row.key, ':', e); }
       });
     }
     
-    // Load projects - ensure tags is always an array
-    const { data: projectsData } = await supabaseClient.from('projects').select('*');
+    // Load projects
+    const { data: projectsData, error: projError } = await supabaseClient.from('projects').select('*');
+    if (projError) console.error('Projects load error:', projError);
     if (projectsData && projectsData.length > 0) {
       projects = projectsData.map(p => ({
         ...p,
         tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? JSON.parse(p.tags) : []),
         images: Array.isArray(p.images) ? p.images : (typeof p.images === 'string' ? JSON.parse(p.images) : [])
       }));
+      console.log('🎮 Projects loaded:', projects.length);
     }
     
-    // Load skills - ensure arrays are correct type
-    const { data: skillsData } = await supabaseClient.from('skills').select('*');
+    // Load skills
+    const { data: skillsData, error: skillError } = await supabaseClient.from('skills').select('*');
+    if (skillError) console.error('Skills load error:', skillError);
     if (skillsData && skillsData.length > 0) {
       skills = skillsData.map(s => ({
         ...s,
         pct: parseInt(s.pct) || 0
       }));
+      console.log('🎯 Skills loaded:', skills.length);
     }
     
     // Load links
-    const { data: linksData } = await supabaseClient.from('links').select('*');
-    if (linksData && linksData.length > 0) links = linksData;
+    const { data: linksData, error: linksError } = await supabaseClient.from('links').select('*');
+    if (linksError) console.error('Links load error:', linksError);
+    if (linksData && linksData.length > 0) {
+      links = linksData;
+      console.log('🔗 Links loaded:', links.length);
+    }
     
     // Load hero
-    const { data: heroData } = await supabaseClient.from('hero').select('*');
-    if (heroData && heroData.length > 0) hero = heroData[0];
+    const { data: heroData, error: heroError } = await supabaseClient.from('hero').select('*');
+    if (heroError) console.error('Hero load error:', heroError);
+    if (heroData && heroData.length > 0) {
+      hero = heroData[0];
+      console.log('🎭 Hero loaded');
+    }
     
     // Load about
-    const { data: aboutData } = await supabaseClient.from('about').select('*');
+    const { data: aboutData, error: aboutError } = await supabaseClient.from('about').select('*');
+    if (aboutError) console.error('About load error:', aboutError);
     if (aboutData && aboutData.length > 0) {
       about = aboutData[0].data || aboutData[0];
+      console.log('👤 About loaded');
     }
     
     // Load contact
-    const { data: contactData } = await supabaseClient.from('contact').select('*');
-    if (contactData && contactData.length > 0) contact = contactData[0];
+    const { data: contactData, error: contactError } = await supabaseClient.from('contact').select('*');
+    if (contactError) console.error('Contact load error:', contactError);
+    if (contactData && contactData.length > 0) {
+      contact = contactData[0];
+      console.log('📬 Contact loaded');
+    }
     
-    console.log('✅ Data loaded from Supabase');
+    console.log('✅ All data loaded from Supabase');
+    console.log('Final stats value:', stats);
     window._supabaseLoaded = true;
     renderSite();
     applyFavicon();
   } catch (e) {
-    console.error('Load from Supabase failed:', e);
+    console.error('❌ Load from Supabase failed:', e);
   }
 }
 
