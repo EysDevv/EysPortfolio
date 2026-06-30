@@ -1711,13 +1711,24 @@ async function loadFromSupabase() {
       });
     }
     
-    // Load projects
+    // Load projects - ensure tags is always an array
     const { data: projectsData } = await supabaseClient.from('projects').select('*');
-    if (projectsData && projectsData.length > 0) projects = projectsData;
+    if (projectsData && projectsData.length > 0) {
+      projects = projectsData.map(p => ({
+        ...p,
+        tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? JSON.parse(p.tags) : []),
+        images: Array.isArray(p.images) ? p.images : (typeof p.images === 'string' ? JSON.parse(p.images) : [])
+      }));
+    }
     
-    // Load skills
+    // Load skills - ensure arrays are correct type
     const { data: skillsData } = await supabaseClient.from('skills').select('*');
-    if (skillsData && skillsData.length > 0) skills = skillsData;
+    if (skillsData && skillsData.length > 0) {
+      skills = skillsData.map(s => ({
+        ...s,
+        pct: parseInt(s.pct) || 0
+      }));
+    }
     
     // Load links
     const { data: linksData } = await supabaseClient.from('links').select('*');
@@ -1729,7 +1740,9 @@ async function loadFromSupabase() {
     
     // Load about
     const { data: aboutData } = await supabaseClient.from('about').select('*');
-    if (aboutData && aboutData.length > 0) about = aboutData[0].data || aboutData[0];
+    if (aboutData && aboutData.length > 0) {
+      about = aboutData[0].data || aboutData[0];
+    }
     
     // Load contact
     const { data: contactData } = await supabaseClient.from('contact').select('*');
@@ -1752,7 +1765,14 @@ async function saveToSupabase(key, val) {
       console.log(`✅ ${key} saved`);
     } else if (key === 'projects' && Array.isArray(val)) {
       await supabaseClient.from('projects').delete().gte('id',0);
-      if (val.length > 0) await supabaseClient.from('projects').insert(val);
+      if (val.length > 0) {
+        const toInsert = val.map(p => ({
+          ...p,
+          tags: Array.isArray(p.tags) ? JSON.stringify(p.tags) : p.tags,
+          images: Array.isArray(p.images) ? JSON.stringify(p.images) : p.images
+        }));
+        await supabaseClient.from('projects').insert(toInsert);
+      }
       console.log(`✅ ${val.length} projects saved`);
     } else if (key === 'skills' && Array.isArray(val)) {
       await supabaseClient.from('skills').delete().gte('id',0);
