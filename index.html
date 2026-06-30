@@ -6,6 +6,106 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,var(--mat-5) 0%,var(--mat-4) 28%,var(--mat-3) 58%,var(--mat-2) 85%,var(--mat-1) 100%);color:var(--text);overflow-x:hidden}
+
+/* Loading screen - always visible until ready */
+#loading-overlay{
+  position:fixed;inset:0;
+  background:linear-gradient(180deg,#CAF0F8 0%,#90E0EF 28%,#00B4D8 58%,#0077B6 85%,#03045E 100%);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;
+  opacity:1;
+  transition:opacity 0.8s ease-out;
+  pointer-events:all;
+}
+body.ready #loading-overlay{
+  opacity:0;
+  pointer-events:none;
+}
+
+.loading-content{
+  text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:28px;
+}
+
+.loading-icon{
+  font-size:80px;
+  width:80px;
+  height:80px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:20px;
+}
+
+.loading-icon img{
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  position:relative;
+  z-index:2;
+}
+
+.loading-fill{
+  position:absolute !important;
+  top:0 !important;
+  left:0 !important;
+  z-index:1;
+  animation:fillProgress 3s ease-in-out forwards;
+  animation-play-state:paused;
+}
+
+@keyframes fillProgress{
+  0%{
+    clip-path:inset(100% 0 0 0);
+  }
+  100%{
+    clip-path:inset(0% 0 0 0);
+  }
+}
+
+.loading-text{
+  font-family:'Fredoka One',cursive;
+  font-size:28px;
+  color:rgba(255,255,255,0.95);
+  letter-spacing:1px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+}
+
+.loading-text span:first-child{
+  display:inline-block;
+}
+
+.dot{
+  display:inline-block;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#FFFFFF;
+  animation:jumpDot 1.4s infinite ease-in-out;
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  flex-shrink:0;
+}
+.dot:nth-child(3){animation-delay:0.15s}
+.dot:nth-child(4){animation-delay:0.3s}
+.dot:nth-child(5){animation-delay:0.45s}
+
+@keyframes jumpDot{
+  0%{
+    transform:translateY(0) scale(0.8);
+    opacity:0.5;
+  }
+  50%{
+    transform:translateY(-16px) scale(1);
+    opacity:1;
+  }
+  100%{
+    transform:translateY(0) scale(0.8);
+    opacity:0.5;
+  }
+}
 :root{
   --blue:#0077B6;--blue-light:#00B4D8;--blue-bg:#0077B6;
   --orange:#0077B6;--orange-light:#00B4D8;
@@ -621,6 +721,24 @@ footer{text-align:center;padding:20px;color:rgba(255,255,255,.5);font-size:.85re
 </style>
 </head>
 <body>
+<div id="loading-overlay">
+  <div class="loading-content">
+    <div class="loading-icon">
+      <img id="loading-favicon" src="" alt="Loading" style="width:80px;height:80px;border-radius:12px;">
+      <svg class="loading-fill" viewBox="0 0 80 80" width="80" height="80" style="position:absolute;top:0;left:0;">
+        <defs>
+          <clipPath id="fillClip">
+            <rect x="0" y="80" width="80" height="80"/>
+          </clipPath>
+        </defs>
+        <rect x="0" y="0" width="80" height="80" fill="rgba(202,240,248,0.6)" clip-path="url(#fillClip)"/>
+      </svg>
+    </div>
+    <div class="loading-text">
+      <span>Loading</span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+  </div>
+</div>
 <div id="particles"><div class="particle" style="width: 3.58483px; height: 3.58483px; left: 86.1761%; animation-duration: 14.0042s; animation-delay: -7.01809s; opacity: 0.205847;"></div><div class="particle" style="width: 3.60065px; height: 3.60065px; left: 51.6681%; animation-duration: 12.388s; animation-delay: -17.7938s; opacity: 0.375306;"></div><div class="particle" style="width: 1.43251px; height: 1.43251px; left: 44.0471%; animation-duration: 16.0099s; animation-delay: -6.43295s; opacity: 0.328222;"></div><div class="particle" style="width: 1.76729px; height: 1.76729px; left: 93.5899%; animation-duration: 18.5849s; animation-delay: -17.2504s; opacity: 0.170132;"></div><div class="particle" style="width: 3.93179px; height: 3.93179px; left: 8.49659%; animation-duration: 15.5114s; animation-delay: -0.37857s; opacity: 0.144523;"></div><div class="particle" style="width: 3.20729px; height: 3.20729px; left: 74.6376%; animation-duration: 23.337s; animation-delay: -19.7261s; opacity: 0.406781;"></div><div class="particle" style="width: 1.16335px; height: 1.16335px; left: 47.6628%; animation-duration: 20.72s; animation-delay: -16.4186s; opacity: 0.172301;"></div><div class="particle" style="width: 1.14798px; height: 1.14798px; left: 89.9755%; animation-duration: 16.9775s; animation-delay: -15.8445s; opacity: 0.397439;"></div><div class="particle" style="width: 1.53957px; height: 1.53957px; left: 5.76584%; animation-duration: 23.2551s; animation-delay: -9.36861s; opacity: 0.491432;"></div><div class="particle" style="width: 3.02141px; height: 3.02141px; left: 79.338%; animation-duration: 24.2866s; animation-delay: -8.80077s; opacity: 0.262627;"></div><div class="particle" style="width: 1.68668px; height: 1.68668px; left: 55.6593%; animation-duration: 13.2553s; animation-delay: -7.66203s; opacity: 0.495839;"></div><div class="particle" style="width: 2.83084px; height: 2.83084px; left: 58.6137%; animation-duration: 18.2091s; animation-delay: -9.8839s; opacity: 0.353642;"></div><div class="particle" style="width: 2.81929px; height: 2.81929px; left: 8.77898%; animation-duration: 15.8889s; animation-delay: -0.313744s; opacity: 0.33447;"></div><div class="particle" style="width: 2.36339px; height: 2.36339px; left: 30.6356%; animation-duration: 16.6011s; animation-delay: -18.2343s; opacity: 0.229073;"></div><div class="particle" style="width: 3.45151px; height: 3.45151px; left: 12.2943%; animation-duration: 16.4498s; animation-delay: -10.2098s; opacity: 0.156259;"></div><div class="particle" style="width: 3.94014px; height: 3.94014px; left: 3.33731%; animation-duration: 14.81s; animation-delay: -13.0967s; opacity: 0.190581;"></div><div class="particle" style="width: 1.06766px; height: 1.06766px; left: 28.353%; animation-duration: 14.1505s; animation-delay: -15.8596s; opacity: 0.149266;"></div><div class="particle" style="width: 1.05783px; height: 1.05783px; left: 17.8999%; animation-duration: 22.8322s; animation-delay: -13.7839s; opacity: 0.458603;"></div><div class="particle" style="width: 3.1154px; height: 3.1154px; left: 86.6885%; animation-duration: 19.6989s; animation-delay: -8.53746s; opacity: 0.136806;"></div><div class="particle" style="width: 1.65125px; height: 1.65125px; left: 64.1073%; animation-duration: 10.0423s; animation-delay: -2.35752s; opacity: 0.441283;"></div><div class="particle" style="width: 2.59381px; height: 2.59381px; left: 78.6627%; animation-duration: 19.124s; animation-delay: -14.0414s; opacity: 0.29364;"></div><div class="particle" style="width: 2.16976px; height: 2.16976px; left: 26.2435%; animation-duration: 12.2333s; animation-delay: -5.51641s; opacity: 0.476951;"></div><div class="particle" style="width: 1.39288px; height: 1.39288px; left: 54.908%; animation-duration: 13.2558s; animation-delay: -16.4924s; opacity: 0.489935;"></div><div class="particle" style="width: 2.24463px; height: 2.24463px; left: 24.9202%; animation-duration: 20.2236s; animation-delay: -10.219s; opacity: 0.420403;"></div><div class="particle" style="width: 1.04767px; height: 1.04767px; left: 68.5367%; animation-duration: 13.3941s; animation-delay: -10.9399s; opacity: 0.124913;"></div><div class="particle" style="width: 2.71157px; height: 2.71157px; left: 25.2237%; animation-duration: 17.6528s; animation-delay: -14.018s; opacity: 0.45736;"></div><div class="particle" style="width: 3.5236px; height: 3.5236px; left: 8.40482%; animation-duration: 13.7215s; animation-delay: -11.6857s; opacity: 0.415211;"></div><div class="particle" style="width: 1.58328px; height: 1.58328px; left: 50.9538%; animation-duration: 24.8839s; animation-delay: -0.577583s; opacity: 0.162641;"></div><div class="particle" style="width: 1.77621px; height: 1.77621px; left: 57.4207%; animation-duration: 19.1857s; animation-delay: -16.0217s; opacity: 0.144448;"></div><div class="particle" style="width: 2.54251px; height: 2.54251px; left: 56.9697%; animation-duration: 22.3777s; animation-delay: -14.161s; opacity: 0.284467;"></div><div class="particle" style="width: 3.99984px; height: 3.99984px; left: 37.0984%; animation-duration: 13.2911s; animation-delay: -12.866s; opacity: 0.440476;"></div><div class="particle" style="width: 2.48191px; height: 2.48191px; left: 65.7733%; animation-duration: 10.2578s; animation-delay: -15.0789s; opacity: 0.203822;"></div><div class="particle" style="width: 3.23036px; height: 3.23036px; left: 31.3875%; animation-duration: 20.2889s; animation-delay: -16.9432s; opacity: 0.157779;"></div><div class="particle" style="width: 3.42885px; height: 3.42885px; left: 30.629%; animation-duration: 20.0846s; animation-delay: -18.6264s; opacity: 0.498075;"></div><div class="particle" style="width: 1.01618px; height: 1.01618px; left: 35.6837%; animation-duration: 12.9482s; animation-delay: -11.9028s; opacity: 0.263755;"></div><div class="particle" style="width: 1.27804px; height: 1.27804px; left: 53.0022%; animation-duration: 24.5817s; animation-delay: -16.6375s; opacity: 0.367821;"></div><div class="particle" style="width: 2.80392px; height: 2.80392px; left: 88.5481%; animation-duration: 20.7003s; animation-delay: -9.39371s; opacity: 0.229055;"></div><div class="particle" style="width: 1.58278px; height: 1.58278px; left: 52.8921%; animation-duration: 23.7013s; animation-delay: -17.4877s; opacity: 0.199529;"></div><div class="particle" style="width: 1.69839px; height: 1.69839px; left: 48.0808%; animation-duration: 24.0529s; animation-delay: -16.8072s; opacity: 0.331157;"></div><div class="particle" style="width: 1.65165px; height: 1.65165px; left: 76.0354%; animation-duration: 22.0905s; animation-delay: -9.01168s; opacity: 0.208741;"></div><div class="particle" style="width: 3.28934px; height: 3.28934px; left: 60.9721%; animation-duration: 12.413s; animation-delay: -19.0744s; opacity: 0.486572;"></div><div class="particle" style="width: 1.31056px; height: 1.31056px; left: 27.1273%; animation-duration: 19.539s; animation-delay: -18.5782s; opacity: 0.240002;"></div><div class="particle" style="width: 1.3228px; height: 1.3228px; left: 61.3907%; animation-duration: 24.9136s; animation-delay: -15.6253s; opacity: 0.46462;"></div><div class="particle" style="width: 3.71424px; height: 3.71424px; left: 5.50969%; animation-duration: 15.2734s; animation-delay: -15.3046s; opacity: 0.288301;"></div><div class="particle" style="width: 2.6622px; height: 2.6622px; left: 8.18706%; animation-duration: 23.5177s; animation-delay: -2.13193s; opacity: 0.229823;"></div><div class="particle" style="width: 2.26987px; height: 2.26987px; left: 60.3503%; animation-duration: 18.1168s; animation-delay: -4.4026s; opacity: 0.469655;"></div><div class="particle" style="width: 2.20888px; height: 2.20888px; left: 25.5187%; animation-duration: 23.7086s; animation-delay: -0.546687s; opacity: 0.115854;"></div><div class="particle" style="width: 3.49186px; height: 3.49186px; left: 46.395%; animation-duration: 13.0178s; animation-delay: -15.8636s; opacity: 0.419247;"></div><div class="particle" style="width: 3.18776px; height: 3.18776px; left: 81.8985%; animation-duration: 18.9746s; animation-delay: -10.0401s; opacity: 0.303604;"></div><div class="particle" style="width: 3.16801px; height: 3.16801px; left: 23.3658%; animation-duration: 23.9774s; animation-delay: -17.6031s; opacity: 0.23966;"></div><div class="particle" style="width: 1.40085px; height: 1.40085px; left: 74.988%; animation-duration: 15.0881s; animation-delay: -11.357s; opacity: 0.309248;"></div><div class="particle" style="width: 3.91559px; height: 3.91559px; left: 76.9262%; animation-duration: 20.069s; animation-delay: -0.821071s; opacity: 0.289457;"></div><div class="particle" style="width: 3.35302px; height: 3.35302px; left: 36.7642%; animation-duration: 17.7743s; animation-delay: -14.2216s; opacity: 0.366417;"></div><div class="particle" style="width: 2.7847px; height: 2.7847px; left: 86.9655%; animation-duration: 18.3007s; animation-delay: -0.597602s; opacity: 0.141149;"></div><div class="particle" style="width: 3.59745px; height: 3.59745px; left: 45.8174%; animation-duration: 17.4598s; animation-delay: -0.735278s; opacity: 0.266221;"></div></div>
 <div class="bg-shapes"><div class="bg-shape"></div><div class="bg-shape"></div><div class="bg-shape"></div></div>
 
@@ -1691,36 +1809,18 @@ async function initSupabase() {
 async function loadFromSupabase() {
   if (!supabaseClient) {
     console.log('❌ Supabase client not initialized');
+    completeLoading();
     return;
   }
   try {
     console.log('🔄 Loading data from Supabase...');
     
-    // Load config keys
-    const { data: configData, error: configError } = await supabaseClient.from('config').select('*');
-    if (configError) console.error('Config load error:', configError);
-    if (configData) {
-      console.log('📦 Config data:', configData);
-      configData.forEach(row => {
-        try {
-          const val = JSON.parse(row.value);
-          switch(row.key) {
-            case 'password': pw = val; break;
-            case 'projectsTitle': projectsTitle = val; break;
-            case 'skillsTitle': skillsTitle = val; break;
-            case 'paymentTitle': paymentTitle = val; break;
-            case 'status': status = val; break;
-            case 'payment': payment = val; break;
-            case 'stats': 
-              if(Array.isArray(val) && val.length > 0) {
-                stats = val;
-                console.log('📊 Stats loaded:', stats);
-              }
-              break;
-            case 'favicon': favicon = val; break;
-          }
-        } catch(e) { console.error('Parse error for', row.key, ':', e); }
-      });
+    // Load stats from dedicated stats table
+    const { data: statsData, error: statsError } = await supabaseClient.from('stats').select('*').order('order_idx', { ascending: true });
+    if (statsError) console.error('Stats load error:', statsError);
+    if (statsData && statsData.length > 0) {
+      stats = statsData;
+      console.log('📊 Stats loaded:', stats);
     }
     
     // Load projects
@@ -1781,20 +1881,35 @@ async function loadFromSupabase() {
     console.log('✅ All data loaded from Supabase');
     console.log('Final stats value:', stats);
     window._supabaseLoaded = true;
-    renderSite();
-    applyFavicon();
+    completeLoading();
   } catch (e) {
     console.error('❌ Load from Supabase failed:', e);
+    // Fallback: render with defaults if Supabase loading fails
+    console.log('📍 Rendering with defaults as fallback');
+    completeLoading();
   }
 }
 
 async function saveToSupabase(key, val) {
   if (!supabaseClient) return;
   try {
-    const configKeys = ['password','projectsTitle','skillsTitle','paymentTitle','status','payment','stats','favicon'];
+    const configKeys = ['password','projectsTitle','skillsTitle','paymentTitle','status','payment','favicon'];
     if (configKeys.includes(key)) {
       await supabaseClient.from('config').upsert({key,value:JSON.stringify(val)},{onConflict:'key'});
       console.log(`✅ ${key} saved`);
+    } else if (key === 'stats' && Array.isArray(val)) {
+      // Save to dedicated stats table
+      await supabaseClient.from('stats').delete().gte('id', 0);
+      if (val.length > 0) {
+        const toInsert = val.map((s, idx) => ({
+          label: s.label,
+          num: s.num,
+          suffix: s.suffix || '',
+          order_idx: idx
+        }));
+        await supabaseClient.from('stats').insert(toInsert);
+      }
+      console.log(`✅ ${val.length} stats saved`);
     } else if (key === 'projects' && Array.isArray(val)) {
       await supabaseClient.from('projects').delete().gte('id',0);
       if (val.length > 0) {
@@ -1892,6 +2007,19 @@ let payment=load('payment',DEFAULTS.payment);
 let favicon=load('favicon','');
 let isLoggedIn=false;
 let editProjIdx=-1;
+const pageLoadStartTime=performance.now();
+
+function completeLoading(){
+  const actualLoadTime=Math.max((performance.now()-pageLoadStartTime)/1000,0.8);
+  const fillOverlay=document.querySelector('.loading-fill');
+  if(fillOverlay){
+    fillOverlay.style.animationDuration=actualLoadTime+'s';
+    fillOverlay.style.animationPlayState='running';
+  }
+  renderSite();
+  applyFavicon();
+  document.body.classList.add('ready');
+}
 
 // Chip colour classes for About tags
 const CHIP_CLASSES=['cg','cb','cp','co','cs'];
@@ -2862,16 +2990,21 @@ sObs.observe(document.getElementById('skills'));
     card.style.boxShadow='8px 8px 0 rgba(0,0,0,.2),0 20px 50px rgba(0,0,0,.25)';
   });
 })();
-// Don't render until Supabase data loads
-// renderSite() and applyFavicon() are now called by loadFromSupabase()
-// Fallback: if Supabase takes >5 seconds, render with defaults
-setTimeout(()=>{
-  if(!window._supabaseLoaded) {
-    console.log('⏱️ Supabase taking too long, rendering with defaults');
-    renderSite();
-    applyFavicon();
-  }
-}, 5000);
+// Load favicon into loading screen
+const loadingFavicon=document.getElementById('loading-favicon');
+const storedFavicon=load('favicon','');
+if(storedFavicon){
+  loadingFavicon.src=storedFavicon;
+} else {
+  // Fallback to a default icon or emoji
+  loadingFavicon.style.display='none';
+  const fallback=document.createElement('div');
+  fallback.style.cssText='font-size:80px;display:flex;align-items:center;justify-content:center;';
+  fallback.textContent='🎮';
+  loadingFavicon.parentElement.insertBefore(fallback,loadingFavicon);
+}
+// ONLY render when Supabase finishes loading - no fallback render!
+// This prevents the flash of old data
 initSupabase();
 // Observe stats section for count-up animation
 setTimeout(()=>{
