@@ -2,7 +2,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eys Portfolio 2026</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -1658,117 +1658,139 @@ const DEFAULTS = _EXPORTED;
 // ═══════════════════════════════════════════
 // SUPABASE INITIALIZATION
 // ═══════════════════════════════════════════
-const SUPABASE_URL = 'https://erfgfvuzmmqvhwcwjrqh.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_pxXp_0TjYXai85jgZ1yZ6Q_0lh1ISIM';
-const { createClient } = window.supabase;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+let supabaseClient = null;
+const dataCache = {};
 
-// Cache for data
-let dataCache = {};
+function initSupabase() {
+  if (supabaseClient) return;
+  
+  // Wait for library to load
+  const checkSupabase = setInterval(() => {
+    if (window.supabase && window.supabase.createClient) {
+      clearInterval(checkSupabase);
+      const { createClient } = window.supabase;
+      supabaseClient = createClient(
+        'https://erfgfvuzmmqvhwcwjrqh.supabase.co',
+        'sb_publishable_pxXp_0TjYXai85jgZ1yZ6Q_0lh1ISIM'
+      );
+      loadFromSupabase();
+    }
+  }, 100);
+  
+  // Fallback timeout
+  setTimeout(() => {
+    if (!supabaseClient) {
+      console.warn('Supabase did not load, using localStorage fallback');
+    }
+  }, 5000);
+}
 
-// Mapping of keys to Supabase tables
-const tableMapping = {
-  'projects': 'projects',
-  'hero': 'hero',
-  'about': 'about',
-  'skills': 'skills',
-  'contact': 'contact',
-  'links': 'links',
-  'projectsTitle': 'config',
-  'skillsTitle': 'config',
-  'paymentTitle': 'config',
-  'status': 'config',
-  'password': 'config',
-  'payment': 'config'
-};
-
-async function load(key, def) {
+async function loadFromSupabase() {
+  if (!supabaseClient) return;
+  
   try {
-    // Return from cache first
+    // Load config
+    const { data: configData } = await supabaseClient.from('config').select('*');
+    if (configData) {
+      configData.forEach(row => {
+        try {
+          dataCache[row.key] = JSON.parse(row.value);
+        } catch {
+          dataCache[row.key] = row.value;
+        }
+      });
+    }
+    
+    // Load projects
+    const { data: projectsData } = await supabaseClient.from('projects').select('*');
+    if (projectsData) dataCache['projects'] = projectsData;
+    
+    // Load skills
+    const { data: skillsData } = await supabaseClient.from('skills').select('*');
+    if (skillsData) dataCache['skills'] = skillsData;
+    
+    // Load links
+    const { data: linksData } = await supabaseClient.from('links').select('*');
+    if (linksData) dataCache['links'] = linksData;
+    
+    // Load other tables
+    const { data: heroData } = await supabaseClient.from('hero').select('*');
+    if (heroData && heroData[0]) dataCache['hero'] = heroData[0];
+    
+    const { data: aboutData } = await supabaseClient.from('about').select('*');
+    if (aboutData && aboutData[0]) dataCache['about'] = aboutData[0];
+    
+    const { data: contactData } = await supabaseClient.from('contact').select('*');
+    if (contactData && contactData[0]) dataCache['contact'] = contactData[0];
+    
+    console.log('✅ Supabase data loaded');
+  } catch (e) {
+    console.error('Error loading from Supabase:', e);
+  }
+}
+
+function load(key, def) {
+  try {
+    // Try cache first
     if (dataCache[key] !== undefined) {
       return dataCache[key];
     }
-
-    const table = tableMapping[key];
-    if (!table) return def;
-
-    if (table === 'config') {
-      // For config table, get by key
-      const { data, error } = await supabase
-        .from('config')
-        .select('value')
-        .eq('key', key)
-        .single();
-      
-      if (error || !data) {
-        dataCache[key] = def;
-        return def;
-      }
-      const val = JSON.parse(data.value);
-      dataCache[key] = val;
-      return val;
-    } else {
-      // For other tables, get all records
-      const { data, error } = await supabase
-        .from(table)
-        .select('*');
-      
-      if (error || !data) {
-        dataCache[key] = def;
-        return def;
-      }
-      dataCache[key] = data;
-      return data;
-    }
+    
+    // Fallback to localStorage
+    const v = localStorage.getItem('pf_' + key);
+    return v ? JSON.parse(v) : def;
   } catch (e) {
-    console.error('Load error:', e);
     return def;
   }
 }
 
-async function persist(key, val) {
+async function persistToSupabase(key, val) {
+  if (!supabaseClient) return;
+  
   try {
-    dataCache[key] = val;
-    const table = tableMapping[key];
-    if (!table) return;
-
-    if (table === 'config') {
-      // Update config table
-      const { error } = await supabase
+    const configKeys = ['password', 'projectsTitle', 'skillsTitle', 'paymentTitle', 'status', 'payment', 'stats'];
+    
+    if (configKeys.includes(key)) {
+      await supabaseClient
         .from('config')
         .upsert({ key, value: JSON.stringify(val) }, { onConflict: 'key' });
-      
-      if (error) console.error('Persist error:', error);
-    } else if (key === 'projects') {
-      // Special handling for projects - delete old and insert new
-      await supabase.from('projects').delete().neq('id', 0); // Delete all
-      if (Array.isArray(val) && val.length > 0) {
-        const { error } = await supabase
-          .from('projects')
-          .insert(val);
-        if (error) console.error('Insert projects error:', error);
+    } else if (key === 'projects' && Array.isArray(val)) {
+      await supabaseClient.from('projects').delete().gt('id', 0);
+      if (val.length > 0) {
+        await supabaseClient.from('projects').insert(val);
       }
-    } else if (key === 'skills') {
-      // Special handling for skills
-      await supabase.from('skills').delete().neq('id', 0);
-      if (Array.isArray(val) && val.length > 0) {
-        const { error } = await supabase
-          .from('skills')
-          .insert(val);
-        if (error) console.error('Insert skills error:', error);
+    } else if (key === 'skills' && Array.isArray(val)) {
+      await supabaseClient.from('skills').delete().gt('id', 0);
+      if (val.length > 0) {
+        await supabaseClient.from('skills').insert(val);
       }
-    } else if (key === 'links') {
-      // Special handling for links
-      await supabase.from('links').delete().neq('id', 0);
-      if (Array.isArray(val) && val.length > 0) {
-        const { error } = await supabase
-          .from('links')
-          .insert(val);
-        if (error) console.error('Insert links error:', error);
+    } else if (key === 'links' && Array.isArray(val)) {
+      await supabaseClient.from('links').delete().gt('id', 0);
+      if (val.length > 0) {
+        await supabaseClient.from('links').insert(val);
       }
     }
   } catch (e) {
-    console.error('Persist error:', e);
+    console.error('Error persisting to Supabase:', e);
+  }
+}
+
+function persist(key, val) {
+  try {
+    // Update cache
+    dataCache[key] = val;
+    
+    // Save to localStorage as backup
+    localStorage.setItem('pf_' + key, JSON.stringify(val));
+    
+    // Save to Supabase async (fire and forget)
+    persistToSupabase(key, val).catch(e => console.error('Async persist error:', e));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      showQuotaWarning();
+    } else {
+      console.error('Storage error:', e);
+    }
   }
 }
 
@@ -1800,43 +1822,21 @@ function compressImage(dataUrl, maxW=800, quality=0.72){
   });
 }
 
-// Initialize variables with defaults
-let pw=DEFAULTS.password;
-let hero=DEFAULTS.hero;
-let about=DEFAULTS.about;
-let projectsTitle=DEFAULTS.projectsTitle;
-let projects=DEFAULTS.projects;
-let skillsTitle=DEFAULTS.skillsTitle;
-let skills=DEFAULTS.skills;
-let contact=DEFAULTS.contact;
-let links=DEFAULTS.links;
-let status=DEFAULTS.status;
-let stats=DEFAULTS.stats;
-let paymentTitle=DEFAULTS.paymentTitle;
-let payment=DEFAULTS.payment;
+let pw=load('password',DEFAULTS.password);
+let hero=load('hero',DEFAULTS.hero);
+let about=load('about',DEFAULTS.about);
+let projectsTitle=load('projectsTitle',DEFAULTS.projectsTitle);
+let projects=load('projects',DEFAULTS.projects);
+let skillsTitle=load('skillsTitle',DEFAULTS.skillsTitle);
+let skills=load('skills',DEFAULTS.skills);
+let contact=load('contact',DEFAULTS.contact);
+let links=load('links',DEFAULTS.links);
+let status=load('status',DEFAULTS.status);
+let stats=load('stats',DEFAULTS.stats);
+let paymentTitle=load('paymentTitle',DEFAULTS.paymentTitle);
+let payment=load('payment',DEFAULTS.payment);
 let isLoggedIn=false;
 let editProjIdx=-1;
-
-// Load data from Supabase asynchronously
-async function initializeData() {
-  pw = await load('password', DEFAULTS.password);
-  hero = await load('hero', DEFAULTS.hero);
-  about = await load('about', DEFAULTS.about);
-  projectsTitle = await load('projectsTitle', DEFAULTS.projectsTitle);
-  projects = await load('projects', DEFAULTS.projects);
-  skillsTitle = await load('skillsTitle', DEFAULTS.skillsTitle);
-  skills = await load('skills', DEFAULTS.skills);
-  contact = await load('contact', DEFAULTS.contact);
-  links = await load('links', DEFAULTS.links);
-  status = await load('status', DEFAULTS.status);
-  stats = await load('stats', DEFAULTS.stats);
-  paymentTitle = await load('paymentTitle', DEFAULTS.paymentTitle);
-  payment = await load('payment', DEFAULTS.payment);
-  
-  // Render the site once data is loaded
-  renderSite();
-  renderProjList();
-}
 
 // Chip colour classes for About tags
 const CHIP_CLASSES=['cg','cb','cp','co','cs'];
@@ -2774,7 +2774,9 @@ sObs.observe(document.getElementById('skills'));
     card.style.boxShadow='8px 8px 0 rgba(0,0,0,.2),0 20px 50px rgba(0,0,0,.25)';
   });
 })();
-initializeData();
+renderSite();
+// Initialize Supabase connection
+initSupabase();
 // Observe stats section for count-up animation
 setTimeout(()=>{
   const statsEl=document.getElementById('stats');
