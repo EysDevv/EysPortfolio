@@ -1655,141 +1655,67 @@ const DEFAULTS = _EXPORTED;
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
-// ═══════════════════════════════════════════
-// SUPABASE INITIALIZATION
-// ═══════════════════════════════════════════
+// Supabase client
 let supabaseClient = null;
-const dataCache = {};
 
-function initSupabase() {
-  if (supabaseClient) return;
-  
-  // Wait for library to load
-  const checkSupabase = setInterval(() => {
-    if (window.supabase && window.supabase.createClient) {
-      clearInterval(checkSupabase);
-      const { createClient } = window.supabase;
-      supabaseClient = createClient(
-        'https://erfgfvuzmmqvhwcwjrqh.supabase.co',
-        'sb_publishable_pxXp_0TjYXai85jgZ1yZ6Q_0lh1ISIM'
-      );
-      loadFromSupabase();
+async function initSupabase() {
+  let attempts = 0;
+  const checkLib = setInterval(async () => {
+    attempts++;
+    if (window.supabase?.createClient) {
+      clearInterval(checkLib);
+      try {
+        const { createClient } = window.supabase;
+        supabaseClient = createClient(
+          'https://erfgfvuzmmqvhwcwjrqh.supabase.co',
+          'sb_publishable_pxXp_0TjYXai85jgZ1yZ6Q_0lh1ISIM'
+        );
+        console.log('✅ Supabase ready');
+      } catch (e) {
+        console.error('Supabase init failed:', e);
+      }
     }
+    if (attempts > 50) clearInterval(checkLib);
   }, 100);
-  
-  // Fallback timeout
-  setTimeout(() => {
-    if (!supabaseClient) {
-      console.warn('Supabase did not load, using localStorage fallback');
-    }
-  }, 5000);
 }
 
-async function loadFromSupabase() {
+async function saveToSupabase(key, val) {
   if (!supabaseClient) return;
-  
   try {
-    // Load config
-    const { data: configData } = await supabaseClient.from('config').select('*');
-    if (configData) {
-      configData.forEach(row => {
-        try {
-          dataCache[row.key] = JSON.parse(row.value);
-        } catch {
-          dataCache[row.key] = row.value;
-        }
-      });
-    }
-    
-    // Load projects
-    const { data: projectsData } = await supabaseClient.from('projects').select('*');
-    if (projectsData) dataCache['projects'] = projectsData;
-    
-    // Load skills
-    const { data: skillsData } = await supabaseClient.from('skills').select('*');
-    if (skillsData) dataCache['skills'] = skillsData;
-    
-    // Load links
-    const { data: linksData } = await supabaseClient.from('links').select('*');
-    if (linksData) dataCache['links'] = linksData;
-    
-    // Load other tables
-    const { data: heroData } = await supabaseClient.from('hero').select('*');
-    if (heroData && heroData[0]) dataCache['hero'] = heroData[0];
-    
-    const { data: aboutData } = await supabaseClient.from('about').select('*');
-    if (aboutData && aboutData[0]) dataCache['about'] = aboutData[0];
-    
-    const { data: contactData } = await supabaseClient.from('contact').select('*');
-    if (contactData && contactData[0]) dataCache['contact'] = contactData[0];
-    
-    console.log('✅ Supabase data loaded');
-  } catch (e) {
-    console.error('Error loading from Supabase:', e);
-  }
-}
-
-function load(key, def) {
-  try {
-    // Try cache first
-    if (dataCache[key] !== undefined) {
-      return dataCache[key];
-    }
-    
-    // Fallback to localStorage
-    const v = localStorage.getItem('pf_' + key);
-    return v ? JSON.parse(v) : def;
-  } catch (e) {
-    return def;
-  }
-}
-
-async function persistToSupabase(key, val) {
-  if (!supabaseClient) return;
-  
-  try {
-    const configKeys = ['password', 'projectsTitle', 'skillsTitle', 'paymentTitle', 'status', 'payment', 'stats'];
-    
+    const configKeys = ['password','projectsTitle','skillsTitle','paymentTitle','status','payment','stats'];
     if (configKeys.includes(key)) {
-      await supabaseClient
-        .from('config')
-        .upsert({ key, value: JSON.stringify(val) }, { onConflict: 'key' });
+      await supabaseClient.from('config').upsert({key,value:JSON.stringify(val)},{onConflict:'key'});
+      console.log(`✅ ${key} saved`);
     } else if (key === 'projects' && Array.isArray(val)) {
-      await supabaseClient.from('projects').delete().gt('id', 0);
-      if (val.length > 0) {
-        await supabaseClient.from('projects').insert(val);
-      }
+      await supabaseClient.from('projects').delete().gte('id',0);
+      if (val.length > 0) await supabaseClient.from('projects').insert(val);
+      console.log(`✅ ${val.length} projects saved`);
     } else if (key === 'skills' && Array.isArray(val)) {
-      await supabaseClient.from('skills').delete().gt('id', 0);
-      if (val.length > 0) {
-        await supabaseClient.from('skills').insert(val);
-      }
+      await supabaseClient.from('skills').delete().gte('id',0);
+      if (val.length > 0) await supabaseClient.from('skills').insert(val);
+      console.log(`✅ ${val.length} skills saved`);
     } else if (key === 'links' && Array.isArray(val)) {
-      await supabaseClient.from('links').delete().gt('id', 0);
-      if (val.length > 0) {
-        await supabaseClient.from('links').insert(val);
-      }
+      await supabaseClient.from('links').delete().gte('id',0);
+      if (val.length > 0) await supabaseClient.from('links').insert(val);
+      console.log(`✅ ${val.length} links saved`);
     }
   } catch (e) {
-    console.error('Error persisting to Supabase:', e);
+    console.error('Save error:', e);
   }
 }
 
-function persist(key, val) {
-  try {
-    // Update cache
-    dataCache[key] = val;
-    
-    // Save to localStorage as backup
-    localStorage.setItem('pf_' + key, JSON.stringify(val));
-    
-    // Save to Supabase async (fire and forget)
-    persistToSupabase(key, val).catch(e => console.error('Async persist error:', e));
-  } catch (e) {
-    if (e.name === 'QuotaExceededError' || e.code === 22) {
+function load(key,def){try{const v=localStorage.getItem('pf_'+key);return v?JSON.parse(v):def}catch(e){return def}}
+
+function persist(key,val){
+  try{
+    localStorage.setItem('pf_'+key,JSON.stringify(val));
+    if (supabaseClient) saveToSupabase(key,val).catch(console.error);
+    else setTimeout(()=>{if(supabaseClient)saveToSupabase(key,val).catch(console.error)},1000);
+  }catch(e){
+    if(e.name==='QuotaExceededError'||e.code===22){
       showQuotaWarning();
     } else {
-      console.error('Storage error:', e);
+      console.error('Storage error:',e);
     }
   }
 }
@@ -2775,7 +2701,6 @@ sObs.observe(document.getElementById('skills'));
   });
 })();
 renderSite();
-// Initialize Supabase connection
 initSupabase();
 // Observe stats section for count-up animation
 setTimeout(()=>{
