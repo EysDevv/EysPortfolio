@@ -1704,7 +1704,7 @@ async function saveToSupabase(key, val) {
       console.log(`✅ hero saved`);
     } else if (key === 'about' && typeof val === 'object') {
       await supabaseClient.from('about').delete().gte('id',0);
-      if (val && Object.keys(val).length > 0) await supabaseClient.from('about').insert([val]);
+      if (val && Object.keys(val).length > 0) await supabaseClient.from('about').insert([{data:val}]);
       console.log(`✅ about saved`);
     } else if (key === 'contact' && typeof val === 'object') {
       await supabaseClient.from('contact').delete().gte('id',0);
