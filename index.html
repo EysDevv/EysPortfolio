@@ -1512,6 +1512,14 @@ footer{text-align:center;padding:20px;color:rgba(255,255,255,.5);font-size:.85re
           <span class="save-confirm" id="sc-favicon">✓ Favicon updated!</span>
         </div>
         <div class="ap-card" style="margin-top:24px">
+          <div class="ap-card-title">Open Graph Image</div>
+          <p style="color:var(--admin-muted);font-size:.88rem;font-weight:600;margin-bottom:14px">Upload an image (1200x630 px recommended) for social media preview when sharing your portfolio</p>
+          <div class="fg"><label>Upload OG Image</label><input type="file" id="f-ogImage" accept="image/*" onchange="previewOgImage(this)"></div>
+          <div id="ogImage-preview" style="margin-top:12px;"></div>
+          <button class="ap-save-btn" onclick="saveOgImage()" style="margin-top:12px">Save OG Image</button>
+          <span class="save-confirm" id="sc-ogImage">✓ OG Image updated!</span>
+        </div>
+        <div class="ap-card" style="margin-top:24px">
           <div class="ap-card-title">Reset All Data</div>
           <p style="color:var(--admin-muted);font-size:.88rem;font-weight:600;margin-bottom:14px">This will reset ALL site content back to defaults. Cannot be undone.</p>
           <button class="ap-logout" onclick="resetAll()" style="font-family:'Nunito',sans-serif">⚠️ Reset Everything</button>
@@ -1952,7 +1960,7 @@ async function loadFromSupabase() {
 async function saveToSupabase(key, val) {
   if (!supabaseClient) return;
   try {
-    const configKeys = ['password','projectsTitle','skillsTitle','paymentTitle','status','payment','favicon'];
+    const configKeys = ['password','projectsTitle','skillsTitle','paymentTitle','status','payment','favicon','ogImage'];
     if (configKeys.includes(key)) {
       await supabaseClient.from('config').upsert({key,value:JSON.stringify(val)},{onConflict:'key'});
       console.log(`✅ ${key} saved`);
@@ -2064,6 +2072,7 @@ let stats=load('stats',DEFAULTS.stats);
 let paymentTitle=load('paymentTitle',DEFAULTS.paymentTitle);
 let payment=load('payment',DEFAULTS.payment);
 let favicon=load('favicon','');
+let ogImage=load('ogImage','');
 let isLoggedIn=false;
 let editProjIdx=-1;
 const pageLoadStartTime=performance.now();
@@ -2079,6 +2088,11 @@ function completeLoading(){
   if(hero && hero.name){
     document.querySelector('meta[property="og:title"]').setAttribute('content', hero.name + ' - Portfolio');
     document.querySelector('meta[name="twitter:title"]').setAttribute('content', hero.name + ' - Portfolio');
+  }
+  // Update Open Graph image if available
+  if(ogImage){
+    document.getElementById('og-image').setAttribute('content',ogImage);
+    document.getElementById('twitter-image').setAttribute('content',ogImage);
   }
   renderSite();
   applyFavicon();
@@ -3006,6 +3020,31 @@ function saveFavicon(){
   reader.readAsDataURL(input.files[0]);
 }
 
+function previewOgImage(input){
+  const preview=document.getElementById('ogImage-preview');
+  if(input.files&&input.files[0]){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      preview.innerHTML=`<img src="${e.target.result}" style="width:150px;height:auto;max-height:100px;border:2px solid var(--orange);border-radius:8px;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function saveOgImage(){
+  const input=document.getElementById('f-ogImage');
+  if(!input.files||!input.files[0]){alert('Please select an image first');return}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    ogImage=e.target.result;
+    persist('ogImage',ogImage);
+    document.getElementById('og-image').setAttribute('content',ogImage);
+    document.getElementById('twitter-image').setAttribute('content',ogImage);
+    flash('sc-ogImage');
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
 function changePassword(){
   const cur=document.getElementById('s-curPw').value;
   const nw=document.getElementById('s-newPw').value;
@@ -3060,9 +3099,15 @@ const loadingFavicon=document.getElementById('loading-favicon');
 const storedFavicon=load('favicon','');
 if(storedFavicon){
   loadingFavicon.src=storedFavicon;
-  // Update Open Graph meta tags with favicon
+  // Update Open Graph meta tags with favicon as fallback
   document.getElementById('og-image').setAttribute('content', storedFavicon);
   document.getElementById('twitter-image').setAttribute('content', storedFavicon);
+}
+// Load OG image if set and override favicon
+const storedOgImage=load('ogImage','');
+if(storedOgImage){
+  document.getElementById('og-image').setAttribute('content',storedOgImage);
+  document.getElementById('twitter-image').setAttribute('content',storedOgImage);
 }
 // ONLY render when Supabase finishes loading - no fallback render!
 // This prevents the flash of old data
