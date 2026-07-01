@@ -3,6 +3,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eys Portfolio 2026</title>
+
+<!-- Open Graph Meta Tags for Social Media Preview -->
+<meta property="og:title" content="Eys Portfolio 2026">
+<meta property="og:description" content="Creative Level Designer, Map Builder & 3D Modeler. Explore my portfolio of game levels and 3D designs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="">
+<meta property="og:image" id="og-image" content="">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Eys Portfolio 2026">
+<meta name="twitter:description" content="Creative Level Designer, Map Builder & 3D Modeler. Explore my portfolio of game levels and 3D designs.">
+<meta name="twitter:image" id="twitter-image" content="">
+
+<script>
+// Set Open Graph URL to current page
+document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
+</script>
+
 <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
@@ -2058,6 +2075,11 @@ function completeLoading(){
     fillOverlay.style.animationDuration=actualLoadTime+'s';
     fillOverlay.style.animationPlayState='running';
   }
+  // Update Open Graph title with hero name if available
+  if(hero && hero.name){
+    document.querySelector('meta[property="og:title"]').setAttribute('content', hero.name + ' - Portfolio');
+    document.querySelector('meta[name="twitter:title"]').setAttribute('content', hero.name + ' - Portfolio');
+  }
   renderSite();
   applyFavicon();
   document.body.classList.add('ready');
@@ -3038,6 +3060,9 @@ const loadingFavicon=document.getElementById('loading-favicon');
 const storedFavicon=load('favicon','');
 if(storedFavicon){
   loadingFavicon.src=storedFavicon;
+  // Update Open Graph meta tags with favicon
+  document.getElementById('og-image').setAttribute('content', storedFavicon);
+  document.getElementById('twitter-image').setAttribute('content', storedFavicon);
 }
 // ONLY render when Supabase finishes loading - no fallback render!
 // This prevents the flash of old data
