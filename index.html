@@ -1507,6 +1507,7 @@ footer{text-align:center;padding:20px;color:rgba(255,255,255,.5);font-size:.85re
           <div class="ap-card-title">🎨 Browser Tab Icon (Favicon)</div>
           <p style="color:var(--admin-muted);font-size:.88rem;font-weight:600;margin-bottom:14px">Upload a small image (32x32 or 64x64 px) to display as your browser tab icon</p>
           <div class="fg"><label>Upload Icon Image</label><input type="file" id="f-favicon" accept="image/*" onchange="previewFavicon(this)"></div>
+          <div class="fg"><label>Or paste icon URL</label><input type="text" id="f-favicon-url" placeholder="https://example.com/icon.png" style="padding:10px;border:1px solid var(--border);border-radius:6px;width:100%;font-family:monospace;font-size:0.9rem;" onchange="previewFaviconUrl(this)"></div>
           <div id="favicon-preview" style="margin-top:12px;"></div>
           <button class="ap-save-btn" onclick="saveFavicon()" style="margin-top:12px">Save Favicon</button>
           <span class="save-confirm" id="sc-favicon">✓ Favicon updated!</span>
@@ -1515,6 +1516,7 @@ footer{text-align:center;padding:20px;color:rgba(255,255,255,.5);font-size:.85re
           <div class="ap-card-title">Open Graph Image</div>
           <p style="color:var(--admin-muted);font-size:.88rem;font-weight:600;margin-bottom:14px">Upload an image (1200x630 px recommended) for social media preview when sharing your portfolio</p>
           <div class="fg"><label>Upload OG Image</label><input type="file" id="f-ogImage" accept="image/*" onchange="previewOgImage(this)"></div>
+          <div class="fg"><label>Or paste image URL</label><input type="text" id="f-ogImage-url" placeholder="https://example.com/preview.jpg" style="padding:10px;border:1px solid var(--border);border-radius:6px;width:100%;font-family:monospace;font-size:0.9rem;" onchange="previewOgImageUrl(this)"></div>
           <div id="ogImage-preview" style="margin-top:12px;"></div>
           <button class="ap-save-btn" onclick="saveOgImage()" style="margin-top:12px">Save OG Image</button>
           <span class="save-confirm" id="sc-ogImage">✓ OG Image updated!</span>
@@ -3002,22 +3004,42 @@ function previewFavicon(input){
     const reader=new FileReader();
     reader.onload=function(e){
       preview.innerHTML=`<img src="${e.target.result}" style="width:64px;height:64px;border:2px solid var(--orange);border-radius:8px;">`;
+      document.getElementById('f-favicon-url').value='';
     };
     reader.readAsDataURL(input.files[0]);
   }
 }
 
+function previewFaviconUrl(input){
+  const preview=document.getElementById('favicon-preview');
+  const url=input.value.trim();
+  if(url){
+    preview.innerHTML=`<img src="${url}" style="width:64px;height:64px;border:2px solid var(--orange);border-radius:8px;object-fit:cover;" onerror="this.parentElement.innerHTML='<p style=color:red>Invalid URL or image</p>'">`;
+    document.getElementById('f-favicon').value='';
+  }
+}
+
 function saveFavicon(){
-  const input=document.getElementById('f-favicon');
-  if(!input.files||!input.files[0]){alert('Please select an image first');return}
-  const reader=new FileReader();
-  reader.onload=function(e){
-    favicon=e.target.result;
+  const fileInput=document.getElementById('f-favicon');
+  const urlInput=document.getElementById('f-favicon-url');
+  
+  if(fileInput.files&&fileInput.files[0]){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      favicon=e.target.result;
+      persist('favicon',favicon);
+      applyFavicon();
+      flash('sc-favicon');
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else if(urlInput.value.trim()){
+    favicon=urlInput.value.trim();
     persist('favicon',favicon);
     applyFavicon();
     flash('sc-favicon');
-  };
-  reader.readAsDataURL(input.files[0]);
+  } else {
+    alert('Please upload a file or enter a URL');
+  }
 }
 
 function previewOgImage(input){
@@ -3026,23 +3048,44 @@ function previewOgImage(input){
     const reader=new FileReader();
     reader.onload=function(e){
       preview.innerHTML=`<img src="${e.target.result}" style="width:150px;height:auto;max-height:100px;border:2px solid var(--orange);border-radius:8px;">`;
+      document.getElementById('f-ogImage-url').value='';
     };
     reader.readAsDataURL(input.files[0]);
   }
 }
 
+function previewOgImageUrl(input){
+  const preview=document.getElementById('ogImage-preview');
+  const url=input.value.trim();
+  if(url){
+    preview.innerHTML=`<img src="${url}" style="width:150px;height:auto;max-height:100px;border:2px solid var(--orange);border-radius:8px;object-fit:cover;" onerror="this.parentElement.innerHTML='<p style=color:red>Invalid URL or image</p>'">`;
+    document.getElementById('f-ogImage').value='';
+  }
+}
+
 function saveOgImage(){
-  const input=document.getElementById('f-ogImage');
-  if(!input.files||!input.files[0]){alert('Please select an image first');return}
-  const reader=new FileReader();
-  reader.onload=function(e){
-    ogImage=e.target.result;
+  const fileInput=document.getElementById('f-ogImage');
+  const urlInput=document.getElementById('f-ogImage-url');
+  
+  if(fileInput.files&&fileInput.files[0]){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      ogImage=e.target.result;
+      persist('ogImage',ogImage);
+      document.getElementById('og-image').setAttribute('content',ogImage);
+      document.getElementById('twitter-image').setAttribute('content',ogImage);
+      flash('sc-ogImage');
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else if(urlInput.value.trim()){
+    ogImage=urlInput.value.trim();
     persist('ogImage',ogImage);
     document.getElementById('og-image').setAttribute('content',ogImage);
     document.getElementById('twitter-image').setAttribute('content',ogImage);
     flash('sc-ogImage');
-  };
-  reader.readAsDataURL(input.files[0]);
+  } else {
+    alert('Please upload a file or enter a URL');
+  }
 }
 
 function changePassword(){
